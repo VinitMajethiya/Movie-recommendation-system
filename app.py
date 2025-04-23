@@ -2,6 +2,10 @@ import streamlit as st
 import pickle
 import pandas as pd
 import requests
+from collections import deque  # Import for queue
+
+# Initialize a queue to store recently recommended movie titles (max 5 items)
+recent_recommendations = deque(maxlen=5)
 
 # Function to recommend movies
 def recommend(movie):
@@ -11,7 +15,7 @@ def recommend(movie):
     recommended_movie_details = []
     for i in distances[1:11]:  # Top 10 recommendations
         movie_title = movies.iloc[i[0]].Series_Title
-        poster_url, overview, director, cast = fetch_movie_details(movie_title)  # Fetch details for each movie
+        poster_url, overview, director, cast = fetch_movie_details(movie_title)
         recommended_movie_details.append({
             "title": movie_title,
             "poster": poster_url,
@@ -104,18 +108,27 @@ if st.button('🔍 Get Recommendations'):
     with st.spinner('Fetching recommendations... 🎥'):
         recommendations = recommend(selected_movie_name)
 
+    # Add the current movie to the queue
+    recent_recommendations.append(selected_movie_name)
+
     st.markdown("### Recommendations 🎉")
     for movie in recommendations:
         with st.container():
-            col1, col2 = st.columns([1, 3])  # Create two columns for poster and details
+            col1, col2 = st.columns([1, 3])
             with col1:
-                st.image(movie["poster"], width=150)  # Display movie poster
+                st.image(movie["poster"], width=150)
             with col2:
-                st.markdown(f'<p class="movie-title">{movie["title"]}</p>', unsafe_allow_html=True)  # Movie title
-                st.markdown(f'<p class="movie-overview"><b>Overview:</b> {movie["overview"]}</p>', unsafe_allow_html=True)  # Movie overview
-                st.markdown(f'<p class="movie-director"><b>Director:</b> {movie["director"]}</p>', unsafe_allow_html=True)  # Movie director
-                st.markdown(f'<p class="movie-cast"><b>Cast:</b> {movie["cast"]}</p>', unsafe_allow_html=True)  # Movie cast
-                st.markdown("---")  # Divider for better readability
+                st.markdown(f'<p class="movie-title">{movie["title"]}</p>', unsafe_allow_html=True)
+                st.markdown(f'<p class="movie-overview"><b>Overview:</b> {movie["overview"]}</p>', unsafe_allow_html=True)
+                st.markdown(f'<p class="movie-director"><b>Director:</b> {movie["director"]}</p>', unsafe_allow_html=True)
+                st.markdown(f'<p class="movie-cast"><b>Cast:</b> {movie["cast"]}</p>', unsafe_allow_html=True)
+                st.markdown("---")
+
+    # Show recently recommended movies using the queue
+    if recent_recommendations:
+        st.markdown("### 🔁 Recently Recommended Movies")
+        for movie_name in list(recent_recommendations):
+            st.markdown(f"- {movie_name}")
 
 # Footer with personalization
 st.markdown(
