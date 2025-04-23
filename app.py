@@ -2,10 +2,11 @@ import streamlit as st
 import pickle
 import pandas as pd
 import requests
-from collections import deque  # Import for queue
+from collections import deque
 
-# Initialize a queue to store recently recommended movie titles (max 5 items)
-recent_recommendations = deque(maxlen=5)
+# Initialize queue in session state if not already present
+if 'recent_recommendations' not in st.session_state:
+    st.session_state.recent_recommendations = deque(maxlen=5)
 
 # Function to recommend movies
 def recommend(movie):
@@ -108,8 +109,8 @@ if st.button('🔍 Get Recommendations'):
     with st.spinner('Fetching recommendations... 🎥'):
         recommendations = recommend(selected_movie_name)
 
-    # Add the current movie to the queue
-    recent_recommendations.append(selected_movie_name)
+    # Append selected movie to persistent queue
+    st.session_state.recent_recommendations.append(selected_movie_name)
 
     st.markdown("### Recommendations 🎉")
     for movie in recommendations:
@@ -124,11 +125,11 @@ if st.button('🔍 Get Recommendations'):
                 st.markdown(f'<p class="movie-cast"><b>Cast:</b> {movie["cast"]}</p>', unsafe_allow_html=True)
                 st.markdown("---")
 
-    # Show recently recommended movies using the queue
-    if recent_recommendations:
-        st.markdown("### 🔁 Recently Recommended Movies")
-        for movie_name in list(recent_recommendations):
-            st.markdown(f"- {movie_name}")
+# Show recently recommended movies using session-based queue
+if st.session_state.recent_recommendations:
+    st.markdown("### 🔁 Recently Recommended Movies")
+    for movie_name in list(st.session_state.recent_recommendations):
+        st.markdown(f"- {movie_name}")
 
 # Footer with personalization
 st.markdown(
